@@ -5,3 +5,5 @@ asyncpg
 python-jose[cryptography]
 bcrypt>=4.0.0
 pydantic
+
+ruff>=0.1.0

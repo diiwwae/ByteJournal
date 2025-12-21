@@ -2,3 +2,6 @@
 .venv
 test.ipynb
 *.pdf
+*.json
+*.toml
+.mypy_cache
