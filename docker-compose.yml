@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: bitjournal_db
+    # environment:
+    #   POSTGRES_DB: bitjournal
+    #   POSTGRES_USER: postgres
+    #   POSTGRES_PASSWORD: postgres
+    env_file:
+      - .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    container_name: bitjournal_backend
+    depends_on:
+      - db
+    # environment:
+    #   DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/bitjournal
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+
+volumes:
+  pg_data:
