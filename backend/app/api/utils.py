@@ -1,17 +1,15 @@
-import os
-from jose import jwt, JWTError
-from pydantic import BaseModel
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
+from jose import JWTError, jwt
 
-from app.db import get_db
-from app import security, SECRET
+from app import SECRET, security
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+) -> str:
     if SECRET is None:
         raise ValueError("JWT_SECRET environment variable is not set")
 

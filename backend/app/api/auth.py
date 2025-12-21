@@ -1,7 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +27,7 @@ class UserLoginResponse(BaseModel):
 class UserMeResponse(BaseModel):
     id: str
     username: str
+    role_id: str
     is_active: bool
     created_at: datetime
 
@@ -34,7 +36,7 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=UserRegisterResponse)
-async def register(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
+async def register(user_in: UserLogin, db: Annotated[AsyncSession, Depends(get_db)]):
     hashed = hash_password(user_in.password)
     query = text("""
         INSERT INTO users (username, password_hash)
@@ -49,18 +51,28 @@ async def register(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=UserLoginResponse)
-async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
+async def login(user_in: UserLogin, db: Annotated[AsyncSession, Depends(get_db)]):
     return UserLoginResponse(access_token=create_token(user_in.username))
 
 
-# @router.get("/me", response_model=UserMeResponse)
-# async def me(user: str = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
-#     query = text("SELECT username FROM users WHERE username=:u")
-#     try:
-#         res = await db.execute(query, {"u": user})
-#         row = res.fetchone()
-#         if not row:
-#             raise HTTPException(401, "User not found")
-#         return UserMeResponse(user=row[0])
-#     except Exception:
-#         raise HTTPException(500, "Internal server error")
+@router.get("/me", response_model=UserMeResponse)
+async def me(
+    user: Annotated[str, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    query = text("SELECT * FROM users WHERE username=:u")
+    try:
+        res = await db.execute(query, {"u": user})
+        row = res.fetchone()
+        print(row)
+        if not row:
+            raise HTTPException(401, "User not found")
+        return UserMeResponse(
+            id=row.id,
+            username=row.username,
+            is_active=row.is_active,
+            role_id=row.role_id,
+            created_at=row.created_at,
+        )
+    except Exception:
+        raise HTTPException(500, "Internal server error")
