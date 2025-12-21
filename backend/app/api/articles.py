@@ -23,10 +23,12 @@ class ArticleCreate(BaseModel):
     title: str
     body: str
 
+class ArticleResponse(BaseModel):
+    status: str
+
 @router.post("/")
 async def create_article(
-    title: str,
-    body: str,
+    article_in: ArticleCreate,
     user: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -34,6 +36,6 @@ async def create_article(
         INSERT INTO articles (author_id, title, body)
         SELECT id, :t, :b FROM users WHERE username=:u
     """)
-    await db.execute(q, {"t": title, "b": body, "u": user})
+    await db.execute(q, {"t": article_in.title, "b": article_in.body, "u": user})
     await db.commit()
-    return {"status": "created"}
+    return ArticleResponse(status="created")
