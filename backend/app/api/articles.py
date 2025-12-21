@@ -1,23 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from jose import jwt, JWTError
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
-import os
+
 from app.db import get_db
+from app.api.utils import get_current_user
 
 router = APIRouter()
-security = HTTPBearer()
-
-SECRET = os.getenv("JWT_SECRET")
-
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET, algorithms=["HS256"])
-        return payload["sub"]
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
 
 class ArticleCreate(BaseModel):
     title: str
@@ -26,7 +16,7 @@ class ArticleCreate(BaseModel):
 class ArticleResponse(BaseModel):
     status: str
 
-@router.post("/")
+@router.post("/", response_model=ArticleResponse)
 async def create_article(
     article_in: ArticleCreate,
     user: str = Depends(get_current_user),
