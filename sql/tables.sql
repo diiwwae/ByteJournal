@@ -16,7 +16,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role_id UUID REFERENCES roles(id),
+    role_id UUID REFERENCES roles(id) DEFAULT get_reader_role_id(),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
