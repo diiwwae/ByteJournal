@@ -42,3 +42,14 @@ CREATE TABLE audit_log (
     changed_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Логи импорта
+CREATE TABLE import_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id),
+    filename TEXT,
+    row_number INTEGER,
+    status TEXT,
+    error_message TEXT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
