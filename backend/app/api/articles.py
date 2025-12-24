@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Optional
+from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -38,6 +38,92 @@ class ArticleStatsResponse(BaseModel):
 class LikeResponse(BaseModel):
     status: str
     is_liked: bool
+
+
+class ArticleListItem(BaseModel):
+    id: str
+    title: str
+    author_id: str
+    author_username: str
+    created_at: datetime
+    body: str
+
+
+class ArticleListResponse(BaseModel):
+    articles: List[ArticleListItem]
+
+
+@router.get("/", response_model=ArticleListResponse)
+async def list_articles(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    limit: Optional[int] = 50,
+    offset: Optional[int] = 0,
+):
+    """Получить список статей из представления v_recent_articles."""
+    query = text("""
+        SELECT 
+            article_id,
+            title,
+            body,
+            created_at,
+            author_id,
+            author_username
+        FROM v_recent_articles
+        ORDER BY created_at DESC
+        LIMIT :limit OFFSET :offset
+    """)
+    result = await db.execute(query, {"limit": limit, "offset": offset})
+    rows = result.fetchall()
+
+    articles = [
+        ArticleListItem(
+            id=str(row.article_id),
+            title=row.title,
+            author_id=str(row.author_id),
+            author_username=row.author_username,
+            created_at=row.created_at,
+            body=row.body,
+        )
+        for row in rows
+    ]
+
+    return ArticleListResponse(articles=articles)
+
+
+@router.get("/{article_id}", response_model=ArticleListItem)
+async def get_article(
+    article_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Получить статью по ID."""
+    query = text("""
+        SELECT 
+            article_id,
+            title,
+            body,
+            created_at,
+            author_id,
+            author_username
+        FROM v_recent_articles
+        WHERE article_id = :article_id
+    """)
+    result = await db.execute(query, {"article_id": article_id})
+    row = result.fetchone()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Статья не найдена",
+        )
+
+    return ArticleListItem(
+        id=str(row.article_id),
+        title=row.title,
+        author_id=str(row.author_id),
+        author_username=row.author_username,
+        created_at=row.created_at,
+        body=row.body,
+    )
 
 
 @router.post("/", response_model=ArticleResponse)
