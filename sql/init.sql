@@ -2,26 +2,29 @@
 -- Этот файл импортирует все SQL скрипты в правильном порядке
 
 -- 0. Функции для tables
-\i functions/fn_get_reader_role_id.sql
+\ir functions/fn_get_reader_role_id.sql
 
 -- 1. Создание схемы (расширения, таблицы)
-\i tables.sql
+\ir scripts/tables.sql
 
 -- 2. Функции для триггеров
-\i functions/fn_audit.sql
+\ir functions/fn_audit.sql
 
 -- 3. Триггеры
-\i triggers/audit_users.sql
-\i triggers/audit_articles.sql
+\ir triggers/audit_users.sql
+\ir triggers/audit_articles.sql
 
 -- 4. Индексы (создаются после таблиц)
-\i indexes.sql
+\ir scripts/indexes.sql
 
 -- 5. Функции (скалярные и табличные)
-\i functions/fn_article_report.sql
+\ir functions/fn_article_report.sql
 
 -- 6. Представления
-\i views/v_article_stats.sql
-\i views/v_user_activity.sql
-\i views/v_recent_articles.sql
+\ir views/v_article_stats.sql
+\ir views/v_user_activity.sql
+\ir views/v_recent_articles.sql
+
+-- 7. Проверка создания
+\ir scripts/constraints.sql
 
