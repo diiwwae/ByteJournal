@@ -9,10 +9,12 @@
 
 -- 2. Функции для триггеров
 \ir functions/fn_audit.sql
+\ir functions/fn_update_counters.sql
 
 -- 3. Триггеры
 \ir triggers/audit_users.sql
 \ir triggers/audit_articles.sql
+\ir triggers/update_counters.sql
 
 -- 4. Индексы (создаются после таблиц)
 \ir scripts/indexes.sql
@@ -24,6 +26,7 @@
 \ir views/v_article_stats.sql
 \ir views/v_user_activity.sql
 \ir views/v_recent_articles.sql
+\ir views/v_category_stats.sql
 
 -- 7. Проверка создания
 \ir scripts/constraints.sql
