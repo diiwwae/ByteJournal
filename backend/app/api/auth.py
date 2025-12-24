@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.utils import get_current_user
@@ -45,8 +46,36 @@ async def register(user_in: UserLogin, db: Annotated[AsyncSession, Depends(get_d
     try:
         await db.execute(query, {"u": user_in.username, "p": hashed})
         await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        error_msg = str(e.orig)
+
+        if "users_username_key" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пользователь с таким именем уже существует",
+            )
+        elif "users_username_length_check" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Имя пользователя слишком короткое (минимум 3 символа без учета пробелов)",
+            )
+        elif "users_password_hash_not_empty_check" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пароль не может быть пустым",
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ошибка при регистрации пользователя",
+        )
     except Exception:
-        raise HTTPException(400, "User already exists")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Внутренняя ошибка сервера",
+        )
     return UserRegisterResponse(status="ok")
 
 

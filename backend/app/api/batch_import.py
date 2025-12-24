@@ -1,8 +1,9 @@
 from typing import Annotated, List, Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.utils import get_current_user
@@ -80,8 +81,34 @@ async def batch_import(
         """)
 
         # Выполняем массовую вставку
-        await db.execute(insert_query, params)
-        await db.commit()
+        try:
+            await db.execute(insert_query, params)
+            await db.commit()
+        except IntegrityError as e:
+            await db.rollback()
+            error_msg = str(e.orig)
+
+            if "articles_title_length_check" in error_msg:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Заголовок статьи слишком короткий (минимум 3 символа)",
+                )
+            elif "articles_body_not_empty_check" in error_msg:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Содержание одной статьи не может быть пустым",
+                )
+
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ошибка при массовом импорте статей (нарушение целостности данных)",
+            )
+        except Exception:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Внутренняя ошибка сервера при импорте",
+            )
 
         inserted_count += len(batch_articles)
 
