@@ -1,36 +1,46 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-from jose import jwt, JWTError
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
 import os
+from typing import Annotated
+
 from app.db import get_db
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 security = HTTPBearer()
 
 SECRET = os.getenv("JWT_SECRET")
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+
+def get_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+):
     try:
-        payload = jwt.decode(credentials.credentials, SECRET, algorithms=["HS256"])
+        payload = jwt.decode(
+            credentials.credentials, SECRET or "", algorithms=["HS256"]
+        )
         return payload["sub"]
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
 
 class ArticleCreate(BaseModel):
     title: str
     body: str
 
+
 class ArticleResponse(BaseModel):
     status: str
+
 
 @router.post("/")
 async def create_article(
     article_in: ArticleCreate,
-    user: str = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    user: Annotated[str, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ):
     q = text("""
         INSERT INTO articles (author_id, title, body)
