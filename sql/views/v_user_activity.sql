@@ -10,6 +10,6 @@ SELECT
     COUNT(DISTINCT CASE WHEN al.operation = 'D' THEN al.id END) AS deletions,
     MAX(al.changed_at) AS last_activity
 FROM users u
-LEFT JOIN audit_log al ON u.id = al.changed_by
+LEFT JOIN audit_log al ON u.id = al.author_id
 GROUP BY u.id, u.username;
 

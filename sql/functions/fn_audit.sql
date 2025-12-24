@@ -1,19 +1,48 @@
 -- Функция аудита для отслеживания изменений в таблицах
 CREATE OR REPLACE FUNCTION fn_audit() RETURNS trigger AS $$
+DECLARE
+  record_id_val UUID;
+  author_id_val UUID;
 BEGIN
+  -- Определяем record_id и author_id в зависимости от операции
   IF TG_OP = 'INSERT' THEN
-    INSERT INTO audit_log(table_name, operation, key_values, old_values, new_values, changed_by)
-    VALUES (TG_TABLE_NAME, 'I', row_to_json(NEW)::jsonb -> (TG_ARGV[0]) , NULL, row_to_json(NEW)::jsonb, current_setting('app.current_user', true)::uuid);
+    record_id_val := NEW.id;
+    IF TG_TABLE_NAME = 'articles' THEN
+      author_id_val := NEW.author_id;
+    ELSE
+      author_id_val := NULL;
+    END IF;
+    
+    INSERT INTO audit_log(table_name, operation, record_id, author_id)
+    VALUES (TG_TABLE_NAME, 'I', record_id_val, author_id_val);
     RETURN NEW;
+    
   ELSIF TG_OP = 'UPDATE' THEN
-    INSERT INTO audit_log(table_name, operation, key_values, old_values, new_values, changed_by)
-    VALUES (TG_TABLE_NAME, 'U', row_to_json(NEW)::jsonb -> (TG_ARGV[0]), row_to_json(OLD)::jsonb, row_to_json(NEW)::jsonb, current_setting('app.current_user', true)::uuid);
+    record_id_val := NEW.id;
+    IF TG_TABLE_NAME = 'articles' THEN
+      author_id_val := NEW.author_id;
+    ELSE
+      author_id_val := NULL;
+    END IF;
+    
+    INSERT INTO audit_log(table_name, operation, record_id, author_id)
+    VALUES (TG_TABLE_NAME, 'U', record_id_val, author_id_val);
     RETURN NEW;
+    
   ELSIF TG_OP = 'DELETE' THEN
-    INSERT INTO audit_log(table_name, operation, key_values, old_values, new_values, changed_by)
-    VALUES (TG_TABLE_NAME, 'D', row_to_json(OLD)::jsonb -> (TG_ARGV[0]), row_to_json(OLD)::jsonb, NULL, current_setting('app.current_user', true)::uuid);
+    record_id_val := OLD.id;
+    IF TG_TABLE_NAME = 'articles' THEN
+      author_id_val := OLD.author_id;
+    ELSE
+      author_id_val := NULL;
+    END IF;
+    
+    INSERT INTO audit_log(table_name, operation, record_id, author_id)
+    VALUES (TG_TABLE_NAME, 'D', record_id_val, author_id_val);
     RETURN OLD;
   END IF;
+  
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 

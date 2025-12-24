@@ -26,6 +26,7 @@ async def create_article(
     user: Annotated[str, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
+    # Создаем статью - триггер автоматически залогирует операцию
     q = text("""
         INSERT INTO articles (author_id, title, body)
         SELECT id, :t, :b FROM users WHERE username=:u

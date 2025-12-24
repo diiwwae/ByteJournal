@@ -15,9 +15,17 @@ CREATE INDEX IF NOT EXISTS idx_articles_created_at ON articles(created_at DESC);
 -- Индексы для таблицы аудита
 CREATE INDEX IF NOT EXISTS idx_audit_log_table_name ON audit_log(table_name);
 CREATE INDEX IF NOT EXISTS idx_audit_log_changed_at ON audit_log(changed_at DESC);
-CREATE INDEX IF NOT EXISTS idx_audit_log_changed_by ON audit_log(changed_by);
+CREATE INDEX IF NOT EXISTS idx_audit_log_author_id ON audit_log(author_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_record_id ON audit_log(record_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_operation ON audit_log(operation);
 
--- GIN индекс для поиска по JSONB полям в audit_log
-CREATE INDEX IF NOT EXISTS idx_audit_log_key_values ON audit_log USING GIN(key_values);
+-- Индексы для таблицы likes
+CREATE INDEX IF NOT EXISTS idx_likes_article_id ON likes(article_id);
+CREATE INDEX IF NOT EXISTS idx_likes_user_id ON likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_likes_created_at ON likes(created_at DESC);
+
+-- Индексы для таблицы import_logs
+CREATE INDEX IF NOT EXISTS idx_import_logs_user_id ON import_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_import_logs_status ON import_logs(status);
+CREATE INDEX IF NOT EXISTS idx_import_logs_created_at ON import_logs(created_at DESC);
 

@@ -34,11 +34,9 @@ CREATE TABLE articles (
 CREATE TABLE audit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     table_name TEXT NOT NULL,
-    operation CHAR(1) NOT NULL,
-    key_values JSONB,
-    old_values JSONB,
-    new_values JSONB,
-    changed_by UUID REFERENCES users(id),
+    operation CHAR(1) NOT NULL,  -- 'I' (INSERT), 'U' (UPDATE), 'D' (DELETE)
+    record_id UUID NOT NULL,      -- ID записи из таблицы
+    author_id UUID REFERENCES users(id),  -- Для статей: автор статьи
     changed_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -51,5 +49,20 @@ CREATE TABLE import_logs (
     status TEXT,
     error_message TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Лайки статей
+CREATE TABLE likes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    article_id UUID REFERENCES articles(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Счётчики статей по авторам
+CREATE TABLE author_article_counters (
+    author_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    article_count INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ DEFAULT now()
 );
 
