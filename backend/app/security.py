@@ -1,10 +1,9 @@
-import os
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
 from jose import jwt
 
-SECRET = os.getenv("JWT_SECRET")
+from app import SECRET
 
 
 def hash_password(password: str) -> str:
@@ -23,5 +22,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 def create_token(username: str) -> str:
+    if SECRET is None:
+        raise ValueError("JWT_SECRET environment variable is not set")
     payload = {"sub": username, "exp": datetime.now(UTC) + timedelta(hours=2)}
-    return jwt.encode(payload, SECRET or "", algorithm="HS256")
+    return jwt.encode(payload, SECRET, algorithm="HS256")

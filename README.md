@@ -1,1 +1,1 @@
-# ByteJournal
+# BitJournal
