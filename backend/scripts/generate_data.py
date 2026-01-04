@@ -175,8 +175,15 @@ async def generate_users(db: AsyncSession, count: int = 150) -> list[str]:
         batch_ids = [str(row.id) for row in result.fetchall()]
         user_ids.extend(batch_ids)
 
+    # Если новых пользователей не создано (они уже есть), загружаем существующих
+    if not user_ids:
+        print("  Новых пользователей не создано, загружаем существующих...")
+        select_query = text("SELECT id FROM users LIMIT :count")
+        result = await db.execute(select_query, {"count": count})
+        user_ids = [str(row.id) for row in result.fetchall()]
+
     await db.commit()
-    print(f"Создано {len(user_ids)} пользователей")
+    print(f"Всего доступно {len(user_ids)} пользователей")
     return user_ids
 
 
@@ -213,8 +220,15 @@ async def generate_categories(db: AsyncSession, count: int = 15) -> list[str]:
         if row:
             category_ids.append(str(row.id))
 
+    # Если категории не созданы (уже есть), загружаем существующие
+    if not category_ids:
+        print("  Новых категорий не создано, загружаем существующие...")
+        select_query = text("SELECT id FROM categories LIMIT :count")
+        result = await db.execute(select_query, {"count": count})
+        category_ids = [str(row.id) for row in result.fetchall()]
+
     await db.commit()
-    print(f"Создано {len(category_ids)} категорий")
+    print(f"Всего доступно {len(category_ids)} категорий")
     return category_ids
 
 
@@ -440,7 +454,7 @@ async def main():
         print("Ошибка: DATABASE_URL не установлен в переменных окружения")
         sys.exit(1)
 
-    print(f"Подключение к базе данных...")
+    print("Подключение к базе данных...")
     engine = create_async_engine(database_url, echo=False)
     async_session = async_sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False

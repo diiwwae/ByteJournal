@@ -1,5 +1,3 @@
--- Индексы для оптимизации запросов
-
 -- Индекс для поиска пользователей по username
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 

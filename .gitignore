@@ -5,3 +5,4 @@ test.ipynb
 *.json
 *.toml
 .mypy_cache
+__pycache__/

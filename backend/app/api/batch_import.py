@@ -30,7 +30,7 @@ class BatchImportResponse(BaseModel):
     total: int
     inserted: int
     failed: int
-    errors: List[Dict[str, str]] = Field(default_factory=list)
+    errors: List[Dict[str, str | int]] = Field(default_factory=list)
 
 
 async def get_user_id(username: str, db: AsyncSession) -> Optional[str]:
